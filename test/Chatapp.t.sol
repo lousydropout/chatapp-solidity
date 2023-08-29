@@ -3,8 +3,8 @@ pragma solidity ^0.8.18;
 
 import {Test} from "forge-std/Test.sol";
 
-import {Chat} from "../src/Chat.sol";
+import {Chatapp} from "../src/Chatapp.sol";
 
 contract CounterTest is Test {
-    Chat public chat;
+    Chatapp public chatapp;
 }

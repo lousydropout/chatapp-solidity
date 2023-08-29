@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-contract Chat {
+contract Chatapp {
     mapping(string => address) public username_to_address;
     mapping(address => string) public address_to_username;
 
