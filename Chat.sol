@@ -5,6 +5,21 @@ contract Chat {
     mapping(string => address) public username_to_address;
     mapping(address => string) public address_to_username;
 
+    struct log {
+        /// unix timestamp in milliseconds (to be determined by frontend client)
+        uint256 timestamp;
+        /// message
+        string message;
+    }
+
+    /// chatlogs key: {sender_username}_{recipient_username}
+    /// chatlogs value: an array of messages `sender_username` sent `recipient_username`
+    mapping(string => log[]) public chatlogs;
+
+    /// chatlog_number key: {sender_username}_{recipient_username}
+    /// chatlog_number value: number of messages `sender_username` sent `recipient_username`
+    mapping(string => uint256) public chatlog_number;
+
     /// sender's address does not match registered username's owner
     error NotUsernameOwner();
 
@@ -23,15 +38,14 @@ contract Chat {
     /// username must be alphanumeric (okay to have number in front)
     error UsernameMustBeAlphaNumeric();
 
-    modifier is_username_owner(string memory username) {
-        if (msg.sender != username_to_address[username]) {
-            revert NotUsernameOwner();
-        }
-        _;
-    }
+    /// recipient does not exist
+    error RecipientDoesNotExist();
 
+    /// sender needs to register a username first
+    error SenderNotRegistered();
+
+    /// check if username is alphanumeric
     function is_alphanumeric(bytes memory username) private pure returns (bool) {
-        // make sure username is alphanumeric (trick taken from stackoverflow somewhere)
         for (uint256 i = 0; i < username.length; i++) {
             bytes1 char = username[i];
             if (
@@ -43,7 +57,8 @@ contract Chat {
         return true;
     }
 
-    modifier meets_username_requirements(string memory username) {
+    /// check if username is valid
+    modifier is_valid_username(string memory username) {
         // make sure username and address haven't been registered yet
         if (username_to_address[username] != 0x0000000000000000000000000000000000000000) revert UsernameAlreadyTaken();
         if (bytes(address_to_username[msg.sender]).length != 0) revert SenderAddressAlreadyRegistered();
@@ -58,9 +73,33 @@ contract Chat {
         _;
     }
 
+    modifier recipient_exists(string memory recipient) {
+        if (username_to_address[recipient] == 0x0000000000000000000000000000000000000000) {
+            revert RecipientDoesNotExist();
+        }
+        _;
+    }
+
     /// Register an unregistered username as your own
-    function register(string memory username) public meets_username_requirements(username) {
+    function register_username(string memory username) public is_valid_username(username) {
         username_to_address[username] = msg.sender;
         address_to_username[msg.sender] = username;
+    }
+
+    /// Get the username of `msg.sender`
+    function get_sender_username() public view returns (string memory) {
+        string memory username = address_to_username[msg.sender];
+        if (bytes(username).length == 0) revert SenderNotRegistered();
+        return username;
+    }
+
+    /// send a message to `recipient`
+    function send_message(string memory recipient, uint256 timestamp, string memory message)
+        public
+        recipient_exists(recipient)
+    {
+        string memory key = string.concat(get_sender_username(), "_", recipient);
+        chatlogs[key].push(log(timestamp, message));
+        chatlog_number[key] += 1;
     }
 }
