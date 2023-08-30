@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.21;
+
+struct Log {
+    /// unix timestamp in milliseconds (to be determined by frontend client)
+    uint256 timestamp;
+    /// message
+    string message;
+}
 
 contract Chatapp {
     mapping(string => address) public username_to_address;
     mapping(address => string) public address_to_username;
 
-    struct log {
-        /// unix timestamp in milliseconds (to be determined by frontend client)
-        uint256 timestamp;
-        /// message
-        string message;
-    }
-
     /// chatlogs key: {sender_username}_{recipient_username}
     /// chatlogs value: an array of messages `sender_username` sent `recipient_username`
-    mapping(string => log[]) public chatlogs;
+    mapping(string => Log[]) public chatlogs;
 
     /// chatlog_number key: {sender_username}_{recipient_username}
     /// chatlog_number value: number of messages `sender_username` sent `recipient_username`
@@ -87,7 +87,7 @@ contract Chatapp {
     }
 
     /// Get the username of `msg.sender`
-    function get_sender_username() public view returns (string memory) {
+    function get_sender_username() private view returns (string memory) {
         string memory username = address_to_username[msg.sender];
         if (bytes(username).length == 0) revert SenderNotRegistered();
         return username;
@@ -99,7 +99,7 @@ contract Chatapp {
         recipient_exists(recipient)
     {
         string memory key = string.concat(get_sender_username(), "_", recipient);
-        chatlogs[key].push(log(timestamp, message));
+        chatlogs[key].push(Log(timestamp, message));
         chatlog_number[key] += 1;
     }
 }
