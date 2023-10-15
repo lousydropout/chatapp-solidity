@@ -1,4 +1,4 @@
-## Chatapp in Solidity
+## Chatapp in Solidity -- (modified)
 
 This is a chatapp built in solidity.
 
